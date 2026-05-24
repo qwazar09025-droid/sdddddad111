@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Финансы — {{ person.name }}</title>
+
+    <script>
+        (function () {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+
+        :root { color-scheme: light; }
+        .dark { color-scheme: dark; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background:
+                radial-gradient(1200px 600px at 80% -10%, rgba(99,102,241,0.12), transparent 60%),
+                radial-gradient(900px 500px at -10% 20%, rgba(236,72,153,0.10), transparent 60%),
+                #f8fafc;
+            min-height: 100vh;
+        }
+        .dark body {
+            background:
+                radial-gradient(1200px 600px at 80% -10%, rgba(99,102,241,0.18), transparent 60%),
+                radial-gradient(900px 500px at -10% 20%, rgba(236,72,153,0.12), transparent 60%),
+                #0b1020;
+        }
+        .glass {
+            background-color: color-mix(in oklab, white 80%, transparent);
+            backdrop-filter: blur(10px);
+        }
+        .dark .glass {
+            background-color: color-mix(in oklab, #0f172a 70%, transparent);
+        }
+    </style>
+</head>
+<body class="text-slate-800 dark:text-slate-100">
+
+<header class="sticky top-0 z-30 glass border-b border-slate-200/60 dark:border-white/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <a href="/" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Назад к списку
+        </a>
+        <button id="themeToggle" type="button" aria-label="Сменить тему"
+                class="size-9 grid place-items-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer">
+            <svg class="size-4 hidden dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <svg class="size-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- Профиль сотрудника -->
+    <section class="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+        <div class="size-16 rounded-2xl bg-linear-to-br from-indigo-500 via-violet-500 to-fuchsia-500 grid place-items-center text-white font-bold text-2xl shadow-md">
+            {{ person.name|slice:":1"|upper }}
+        </div>
+        <div>
+            <div class="text-xs uppercase tracking-wider text-slate-400">Финансовая панель</div>
+            <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ person.name }}</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Возраст: {{ person.age }} лет · ID: {{ person.id }}</p>
+        </div>
+    </section>
+
+    <!-- KPI карточки -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Доход
+            </div>
+            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">— ₽</div>
+            <div class="text-xs text-slate-400 mt-1">за текущий месяц</div>
+        </div>
+        <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+                Расходы
+            </div>
+            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">— ₽</div>
+            <div class="text-xs text-slate-400 mt-1">за текущий месяц</div>
+        </div>
+        <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                Баланс
+            </div>
+            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">— ₽</div>
+            <div class="text-xs text-slate-400 mt-1">текущий</div>
+        </div>
+        <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Премии
+            </div>
+            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">—</div>
+            <div class="text-xs text-slate-400 mt-1">за квартал</div>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- График-заглушка -->
+        <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-slate-900 dark:text-white">Динамика доходов</h2>
+                <span class="text-xs text-slate-400">12 месяцев</span>
+            </div>
+            <div class="h-56 rounded-xl bg-linear-to-tr from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-800/30 border border-slate-200/60 dark:border-white/5 grid place-items-center">
+                <div class="text-center text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-8 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    <div class="text-sm">График будет доступен после интеграции учёта</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние операции (заглушка) -->
+        <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs p-6">
+            <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Последние операции</h2>
+            <ul class="space-y-3 text-sm">
+                <li class="flex items-center justify-between text-slate-400">
+                    <span class="inline-flex items-center gap-2">
+                        <span class="size-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                        Нет данных
+                    </span>
+                    <span>—</span>
+                </li>
+            </ul>
+            <p class="text-xs text-slate-400 mt-4">Раздел в разработке. После подключения учёта здесь появятся транзакции.</p>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        const root = document.documentElement;
+        root.classList.toggle('dark');
+        localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+    });
+</script>
+</body>
+</html>
