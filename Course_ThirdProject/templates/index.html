@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Команда мечты — управление участниками</title>
+
+    <script>
+        // Тема до отрисовки страницы — без мигания
+        (function () {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+
+        :root { color-scheme: light; }
+        .dark { color-scheme: dark; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background:
+                radial-gradient(1200px 600px at 80% -10%, rgba(99,102,241,0.12), transparent 60%),
+                radial-gradient(900px 500px at -10% 20%, rgba(236,72,153,0.10), transparent 60%),
+                #f8fafc;
+            min-height: 100vh;
+        }
+        .dark body {
+            background:
+                radial-gradient(1200px 600px at 80% -10%, rgba(99,102,241,0.18), transparent 60%),
+                radial-gradient(900px 500px at -10% 20%, rgba(236,72,153,0.12), transparent 60%),
+                #0b1020;
+        }
+
+        .glass {
+            background-color: color-mix(in oklab, white 80%, transparent);
+            backdrop-filter: blur(10px);
+        }
+        .dark .glass {
+            background-color: color-mix(in oklab, #0f172a 70%, transparent);
+        }
+
+        @keyframes pop-in {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .anim-pop { animation: pop-in 0.35s cubic-bezier(.2,.7,.2,1) both; }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .anim-toast { animation: toast-in 0.25s ease-out both; }
+    </style>
+</head>
+<body class="text-slate-800 dark:text-slate-100">
+
+<!-- ====== HEADER ====== -->
+<header class="sticky top-0 z-30 glass border-b border-slate-200/60 dark:border-white/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="size-9 rounded-xl bg-linear-to-br from-indigo-500 via-violet-500 to-fuchsia-500 grid place-items-center text-white shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+                <div class="font-bold text-base sm:text-lg leading-tight text-slate-900 dark:text-white">Команда мечты</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 -mt-0.5">Управление участниками</div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a href="/" class="hidden sm:inline-block text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">Участники</a>
+            <button id="themeToggle" type="button" aria-label="Сменить тему"
+                    class="size-9 grid place-items-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                <svg class="size-4 hidden dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <svg class="size-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- ====== HERO + STATS ====== -->
+    <section class="mb-10">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Соберите <span class="bg-linear-to-r from-indigo-500 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">команду мечты</span>
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-2 max-w-2xl">
+            Добавляйте, изменяйте и удаляйте участников без перезагрузки страницы. Все изменения применяются мгновенно.
+        </p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+            <div class="rounded-2xl p-4 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+                <div class="text-xs uppercase tracking-wider text-slate-400">Всего</div>
+                <div id="statTotal" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">{{ people|length }}</div>
+            </div>
+            <div class="rounded-2xl p-4 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+                <div class="text-xs uppercase tracking-wider text-slate-400">Средний возраст</div>
+                <div id="statAvg" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">—</div>
+            </div>
+            <div class="rounded-2xl p-4 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+                <div class="text-xs uppercase tracking-wider text-slate-400">Самый молодой</div>
+                <div id="statMin" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">—</div>
+            </div>
+            <div class="rounded-2xl p-4 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+                <div class="text-xs uppercase tracking-wider text-slate-400">Самый старший</div>
+                <div id="statMax" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">—</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- ====== ФОРМА ДОБАВЛЕНИЯ ====== -->
+        <aside class="lg:col-span-1 h-fit">
+            <div class="rounded-2xl p-6 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs sticky top-20">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="size-9 grid place-items-center rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                    </div>
+                    <h2 class="text-base font-semibold text-slate-900 dark:text-white">Добавить участника</h2>
+                </div>
+
+                <form id="createForm" class="space-y-4" novalidate>
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit"
+                            class="group w-full inline-flex items-center justify-center gap-2 mt-1 bg-linear-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:brightness-110 text-white font-medium py-2.5 rounded-lg text-sm transition-all shadow-md shadow-indigo-500/20 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Добавить в команду
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- ====== СПИСОК УЧАСТНИКОВ ====== -->
+        <section class="lg:col-span-2">
+            <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs overflow-hidden">
+                <div class="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-white/10 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Участники команды</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"><span id="visibleCount">0</span> из <span id="totalCount">0</span></p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input id="searchInput" type="search" placeholder="Поиск по имени…"
+                               class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                    </div>
+                </div>
+
+                <ul id="peopleList" class="divide-y divide-slate-100 dark:divide-white/5">
+                    {% for person in people %}
+                    <li id="person-row-{{ person.id }}" data-name="{{ person.name|lower }}" data-age="{{ person.age }}"
+                        class="person-item group flex items-center gap-4 px-5 sm:px-6 py-4 hover:bg-slate-50/70 dark:hover:bg-white/5 transition-colors">
+                        <div class="avatar size-11 shrink-0 rounded-xl grid place-items-center text-white font-semibold text-sm shadow-xs">{{ person.name|slice:":1"|upper }}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="name-field font-medium text-slate-900 dark:text-white truncate">{{ person.name }}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">
+                                <span class="age-field">{{ person.age }}</span> лет
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <a href="/finance/{{ person.id }}/" title="Финансы"
+                               class="size-9 grid place-items-center rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </a>
+                            <button type="button" onclick="openEditModal({{ person.id }})" title="Изменить"
+                                    class="size-9 grid place-items-center rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            </button>
+                            <button type="button" onclick="confirmDelete({{ person.id }}, '{{ person.name|escapejs }}')" title="Удалить"
+                                    class="size-9 grid place-items-center rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div id="emptyState" class="hidden p-12 text-center">
+                    <div class="mx-auto size-14 grid place-items-center rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-400 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Здесь пока пусто. Добавьте первого участника в команду!</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- ====== МОДАЛКА РЕДАКТИРОВАНИЯ ====== -->
+<div id="editModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="anim-pop bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-md p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Редактировать профиль</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Внесите изменения и нажмите «Сохранить».</p>
+            </div>
+            <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 -m-1 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+
+        <form id="editForm" class="space-y-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" id="editPersonId">
+            <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">Имя</label>
+                <input type="text" id="editName" name="name" required
+                       class="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">Возраст</label>
+                <input type="number" id="editAge" name="age" required min="0"
+                       class="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer">Отмена</button>
+                <button type="submit" class="bg-linear-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:brightness-110 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all shadow-md shadow-indigo-500/20 cursor-pointer">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ====== МОДАЛКА ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ====== -->
+<div id="confirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="anim-pop bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-sm p-6">
+        <div class="flex items-start gap-4">
+            <div class="size-10 shrink-0 grid place-items-center rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Удалить участника?</h3>
+                <p id="confirmText" class="text-sm text-slate-500 dark:text-slate-400 mt-1">Действие нельзя отменить.</p>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+            <button type="button" id="confirmCancel" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer">Отмена</button>
+            <button type="button" id="confirmOk" class="px-4 py-2 text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors cursor-pointer">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- ====== TOAST КОНТЕЙНЕР ====== -->
+<div id="toastRoot" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs"></div>
+
+<script>
+    /* ============== ТЕМА ============== */
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        const root = document.documentElement;
+        root.classList.toggle('dark');
+        localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+    });
+
+    /* ============== УТИЛИТЫ ============== */
+    function getCsrfToken() {
+        const t = document.querySelector('[name=csrfmiddlewaretoken]');
+        return t ? t.value : '';
+    }
+
+    function showToast(msg, type = 'success') {
+        const root = document.getElementById('toastRoot');
+        const colors = {
+            success: 'bg-emerald-600',
+            error: 'bg-rose-600',
+            info: 'bg-slate-800 dark:bg-slate-700'
+        };
+        const el = document.createElement('div');
+        el.className = `anim-toast ${colors[type] || colors.info} text-white text-sm px-4 py-2.5 rounded-lg shadow-lg`;
+        el.textContent = msg;
+        root.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity .25s';
+            setTimeout(() => el.remove(), 300);
+        }, 2600);
+    }
+
+    // Цвет аватара из строки (стабильный)
+    function avatarGradient(seed) {
+        const palettes = [
+            'from-indigo-500 to-fuchsia-500',
+            'from-emerald-500 to-teal-500',
+            'from-rose-500 to-orange-500',
+            'from-sky-500 to-indigo-500',
+            'from-amber-500 to-rose-500',
+            'from-violet-500 to-pink-500',
+        ];
+        let h = 0;
+        for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
+        return palettes[Math.abs(h) % palettes.length];
+    }
+
+    function paintAvatars() {
+        document.querySelectorAll('.avatar').forEach(av => {
+            const li = av.closest('.person-item');
+            const seed = (li?.dataset.name || av.textContent || 'X');
+            av.className = `avatar size-11 shrink-0 rounded-xl grid place-items-center text-white font-semibold text-sm shadow-xs bg-linear-to-br ${avatarGradient(seed)}`;
+        });
+    }
+
+    /* ============== СТАТИСТИКА ============== */
+    function updateStats() {
+        const items = document.querySelectorAll('#peopleList .person-item');
+        const ages = [...items].map(i => parseInt(i.dataset.age, 10)).filter(n => !isNaN(n));
+        document.getElementById('statTotal').textContent = items.length;
+        document.getElementById('totalCount').textContent = items.length;
+        document.getElementById('statAvg').textContent = ages.length ? (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) : '—';
+        document.getElementById('statMin').textContent = ages.length ? Math.min(...ages) : '—';
+        document.getElementById('statMax').textContent = ages.length ? Math.max(...ages) : '—';
+        toggleEmptyState();
+        applySearch();
+    }
+
+    function toggleEmptyState() {
+        const list = document.getElementById('peopleList');
+        const empty = document.getElementById('emptyState');
+        if (list.children.length === 0) {
+            empty.classList.remove('hidden');
+            list.classList.add('hidden');
+        } else {
+            empty.classList.add('hidden');
+            list.classList.remove('hidden');
+        }
+    }
+
+    /* ============== ПОИСК ============== */
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', applySearch);
+
+    function applySearch() {
+        const q = searchInput.value.trim().toLowerCase();
+        let visible = 0;
+        document.querySelectorAll('#peopleList .person-item').forEach(li => {
+            const name = li.dataset.name || '';
+            const match = !q || name.includes(q);
+            li.classList.toggle('hidden', !match);
+            if (match) visible++;
+        });
+        document.getElementById('visibleCount').textContent = visible;
+    }
+
+    /* ============== РЕНДЕР СТРОКИ ============== */
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function escapeJs(s) {
+        return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function createRowHtml(person) {
+        const initial = (person.name?.[0] || '?').toUpperCase();
+        return `
+        <li id="person-row-${person.id}" data-name="${escapeHtml(String(person.name).toLowerCase())}" data-age="${person.age}"
+            class="person-item anim-pop group flex items-center gap-4 px-5 sm:px-6 py-4 hover:bg-slate-50/70 dark:hover:bg-white/5 transition-colors">
+            <div class="avatar size-11 shrink-0 rounded-xl grid place-items-center text-white font-semibold text-sm shadow-xs">${escapeHtml(initial)}</div>
+            <div class="flex-1 min-w-0">
+                <div class="name-field font-medium text-slate-900 dark:text-white truncate">${escapeHtml(person.name)}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400"><span class="age-field">${person.age}</span> лет</div>
+            </div>
+            <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <a href="/finance/${person.id}/" title="Финансы"
+                   class="size-9 grid place-items-center rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </a>
+                <button type="button" onclick="openEditModal(${person.id})" title="Изменить"
+                        class="size-9 grid place-items-center rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button type="button" onclick="confirmDelete(${person.id}, '${escapeJs(person.name)}')" title="Удалить"
+                        class="size-9 grid place-items-center rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+        </li>`;
+    }
+
+    /* ============== CREATE ============== */
+    document.getElementById('createForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+        const formData = new FormData(this);
+        try {
+            const resp = await fetch('/create/', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                document.getElementById('peopleList').insertAdjacentHTML('afterbegin', createRowHtml(data.person));
+                this.reset();
+                paintAvatars();
+                updateStats();
+                showToast('Участник добавлен', 'success');
+            } else {
+                const err = await resp.json();
+                renderFieldErrors('createForm', err.errors);
+                showToast('Проверьте поля формы', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка сети', 'error');
+        }
+    });
+
+    function renderFieldErrors(formId, errors) {
+        if (!errors) return;
+        const form = document.getElementById(formId);
+        for (const field in errors) {
+            const input = form.querySelector(`[name=${field}]`) || document.getElementById('editAge');
+            if (!input) continue;
+            const msg = errors[field][0]?.message || 'Ошибка';
+            input.insertAdjacentHTML('afterend',
+                `<p class="error-msg text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">${escapeHtml(msg)}</p>`
+            );
+        }
+    }
+
+    /* ============== UPDATE ============== */
+    async function openEditModal(id) {
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+        try {
+            const resp = await fetch(`/edit/${id}/`);
+            if (resp.ok) {
+                const p = await resp.json();
+                document.getElementById('editPersonId').value = p.id;
+                document.getElementById('editName').value = p.name;
+                document.getElementById('editAge').value = p.age;
+                document.getElementById('editModal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('editName').focus(), 50);
+            } else {
+                showToast('Не удалось загрузить данные', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка сети', 'error');
+        }
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+        const id = document.getElementById('editPersonId').value;
+        const formData = new FormData(this);
+        try {
+            const resp = await fetch(`/edit/${id}/`, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const row = document.getElementById(`person-row-${id}`);
+                if (row) {
+                    row.querySelector('.name-field').textContent = data.person.name;
+                    row.querySelector('.age-field').textContent = data.person.age;
+                    row.dataset.name = String(data.person.name).toLowerCase();
+                    row.dataset.age = data.person.age;
+                    const av = row.querySelector('.avatar');
+                    if (av) av.textContent = (data.person.name?.[0] || '?').toUpperCase();
+                }
+                closeEditModal();
+                paintAvatars();
+                updateStats();
+                showToast('Изменения сохранены', 'success');
+            } else {
+                const err = await resp.json();
+                renderFieldErrors('editForm', err.errors);
+                showToast('Проверьте поля формы', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка сети', 'error');
+        }
+    });
+
+    /* ============== DELETE (с кастомным подтверждением) ============== */
+    let pendingDeleteId = null;
+    const confirmModal = document.getElementById('confirmModal');
+
+    function confirmDelete(id, name) {
+        pendingDeleteId = id;
+        document.getElementById('confirmText').textContent = `Удалить участника «${name}»? Действие нельзя отменить.`;
+        confirmModal.classList.remove('hidden');
+    }
+
+    document.getElementById('confirmCancel').addEventListener('click', () => {
+        pendingDeleteId = null;
+        confirmModal.classList.add('hidden');
+    });
+
+    document.getElementById('confirmOk').addEventListener('click', async () => {
+        const id = pendingDeleteId;
+        confirmModal.classList.add('hidden');
+        if (id == null) return;
+        try {
+            const resp = await fetch(`/delete/${id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (resp.ok) {
+                document.getElementById(`person-row-${id}`)?.remove();
+                updateStats();
+                showToast('Участник удалён', 'success');
+            } else {
+                showToast(`Ошибка удаления: ${resp.status}`, 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка сети', 'error');
+        } finally {
+            pendingDeleteId = null;
+        }
+    });
+
+    /* ============== Закрытие модалок по Esc/клику вне ============== */
+    [['editModal', closeEditModal], ['confirmModal', () => confirmModal.classList.add('hidden')]].forEach(([id, close]) => {
+        const m = document.getElementById(id);
+        m.addEventListener('click', e => { if (e.target === m) close(); });
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeEditModal();
+            confirmModal.classList.add('hidden');
+        }
+    });
+
+    /* ============== ИНИЦИАЛИЗАЦИЯ ============== */
+    paintAvatars();
+    updateStats();
+</script>
+</body>
+</html>
