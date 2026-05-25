@@ -1,5 +1,5 @@
 from django import forms
-from .models import Person
+from .models import Person, Finance
 
 
 INPUT_CLASS = (
@@ -44,3 +44,38 @@ class PersonForm(forms.ModelForm):
         if age >= 80:
             raise forms.ValidationError('Столько не ЖИВУТ!')
         return age
+
+
+class FinanceForm(forms.ModelForm):
+    class Meta:
+        model = Finance
+        fields = ['date', 'amount']
+        labels = {
+            'date': 'Дата',
+            'amount': 'Сумма',
+        }
+        widgets = {
+            'date': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'type': 'date',
+                    'class': INPUT_CLASS,
+                    'required': True,
+                },
+            ),
+            'amount': forms.NumberInput(attrs={
+                'class': INPUT_CLASS,
+                'placeholder': '0.00',
+                'step': '0.01',
+                'required': True,
+            }),
+        }
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount is None:
+            return amount
+        # Разрешаем отрицательные суммы (это может быть расход), но не нулевые.
+        if amount == 0:
+            raise forms.ValidationError('Сумма не может быть равна нулю.')
+        return amount

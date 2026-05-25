@@ -47,6 +47,18 @@
         .dark .glass {
             background-color: color-mix(in oklab, #0f172a 70%, transparent);
         }
+
+        @keyframes pop-in {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .anim-pop { animation: pop-in 0.35s cubic-bezier(.2,.7,.2,1) both; }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .anim-toast { animation: toast-in 0.25s ease-out both; }
     </style>
 </head>
 <body class="text-slate-800 dark:text-slate-100">
@@ -72,87 +84,417 @@
         <div class="size-16 rounded-2xl bg-linear-to-br from-indigo-500 via-violet-500 to-fuchsia-500 grid place-items-center text-white font-bold text-2xl shadow-md">
             {{ person.name|slice:":1"|upper }}
         </div>
-        <div>
+        <div class="flex-1">
             <div class="text-xs uppercase tracking-wider text-slate-400">Финансовая панель</div>
             <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ person.name }}</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Возраст: {{ person.age }} лет · ID: {{ person.id }}</p>
         </div>
+        <button type="button" onclick="openCreateModal()"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-linear-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:brightness-110 text-white shadow-md shadow-indigo-500/20 transition-all cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Добавить операцию
+        </button>
     </section>
 
     <!-- KPI карточки -->
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
             <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                Итого
+            </div>
+            <div id="kpiTotal" class="text-2xl font-bold text-slate-900 dark:text-white mt-2">0.00 ₽</div>
+            <div class="text-xs text-slate-400 mt-1">сумма всех операций</div>
+        </div>
+        <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
                 Доход
             </div>
-            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">— ₽</div>
-            <div class="text-xs text-slate-400 mt-1">за текущий месяц</div>
+            <div id="kpiIncome" class="text-2xl font-bold text-slate-900 dark:text-white mt-2">0.00 ₽</div>
+            <div class="text-xs text-slate-400 mt-1">положительные суммы</div>
         </div>
         <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
             <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
                 Расходы
             </div>
-            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">— ₽</div>
-            <div class="text-xs text-slate-400 mt-1">за текущий месяц</div>
-        </div>
-        <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
-            <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-                Баланс
-            </div>
-            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">— ₽</div>
-            <div class="text-xs text-slate-400 mt-1">текущий</div>
+            <div id="kpiExpense" class="text-2xl font-bold text-slate-900 dark:text-white mt-2">0.00 ₽</div>
+            <div class="text-xs text-slate-400 mt-1">отрицательные суммы</div>
         </div>
         <div class="rounded-2xl p-5 bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs">
             <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Премии
+                Операций
             </div>
-            <div class="text-2xl font-bold text-slate-900 dark:text-white mt-2">—</div>
-            <div class="text-xs text-slate-400 mt-1">за квартал</div>
+            <div id="kpiCount" class="text-2xl font-bold text-slate-900 dark:text-white mt-2">0</div>
+            <div class="text-xs text-slate-400 mt-1">всего записей</div>
         </div>
     </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- График-заглушка -->
-        <div class="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-semibold text-slate-900 dark:text-white">Динамика доходов</h2>
-                <span class="text-xs text-slate-400">12 месяцев</span>
-            </div>
-            <div class="h-56 rounded-xl bg-linear-to-tr from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-800/30 border border-slate-200/60 dark:border-white/5 grid place-items-center">
-                <div class="text-center text-slate-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-8 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                    <div class="text-sm">График будет доступен после интеграции учёта</div>
-                </div>
+    <!-- Таблица операций -->
+    <section class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs overflow-hidden">
+        <div class="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-semibold text-slate-900 dark:text-white">Операции</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">История финансовых движений сотрудника</p>
             </div>
         </div>
 
-        <!-- Последние операции (заглушка) -->
-        <div class="rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 shadow-xs p-6">
-            <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Последние операции</h2>
-            <ul class="space-y-3 text-sm">
-                <li class="flex items-center justify-between text-slate-400">
-                    <span class="inline-flex items-center gap-2">
-                        <span class="size-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                        Нет данных
-                    </span>
-                    <span>—</span>
-                </li>
-            </ul>
-            <p class="text-xs text-slate-400 mt-4">Раздел в разработке. После подключения учёта здесь появятся транзакции.</p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-xs uppercase tracking-wider text-slate-400 bg-slate-50/60 dark:bg-white/5">
+                        <th class="py-3 px-5 sm:px-6 font-semibold">Дата</th>
+                        <th class="py-3 px-5 sm:px-6 font-semibold">Сумма</th>
+                        <th class="py-3 px-5 sm:px-6 font-semibold text-right">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="financeBody" class="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+                    {% for item in finances %}
+                    <tr id="finance-row-{{ item.id }}" data-amount="{{ item.amount }}"
+                        class="hover:bg-slate-50/70 dark:hover:bg-white/5 transition-colors">
+                        <td class="py-3.5 px-5 sm:px-6 text-slate-700 dark:text-slate-200 date-field">{{ item.date|date:"d.m.Y" }}</td>
+                        <td class="py-3.5 px-5 sm:px-6 font-medium amount-cell">
+                            <span class="amount-field">{{ item.amount }}</span> ₽
+                        </td>
+                        <td class="py-3.5 px-5 sm:px-6">
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button" onclick="openEditModal({{ item.id }})"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                    <span>Изменить</span>
+                                </button>
+                                <button type="button" onclick="confirmDelete({{ item.id }})"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    <span>Удалить</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </div>
+
+        <div id="financeEmpty" class="hidden p-12 text-center">
+            <div class="mx-auto size-14 grid place-items-center rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-400 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Здесь пока пусто. Добавьте первую операцию.</p>
+        </div>
+    </section>
 </main>
 
+<!-- ====== МОДАЛКА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ ====== -->
+<div id="financeModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="anim-pop bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-md p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 id="financeModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Добавить операцию</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Введите дату и сумму операции.</p>
+            </div>
+            <button type="button" onclick="closeFinanceModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 -m-1 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+
+        <form id="financeForm" class="space-y-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" id="financeId">
+
+            {% for field in form %}
+            <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endfor %}
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeFinanceModal()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer">Отмена</button>
+                <button type="submit" id="financeSubmitBtn" class="bg-linear-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:brightness-110 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all shadow-md shadow-indigo-500/20 cursor-pointer">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ====== МОДАЛКА ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ====== -->
+<div id="confirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="anim-pop bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-sm p-6">
+        <div class="flex items-start gap-4">
+            <div class="size-10 shrink-0 grid place-items-center rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Удалить операцию?</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Действие нельзя отменить.</p>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+            <button type="button" id="confirmCancel" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer">Отмена</button>
+            <button type="button" id="confirmOk" class="px-4 py-2 text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors cursor-pointer">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<div id="toastRoot" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs"></div>
+
 <script>
+    const PERSON_ID = {{ person.id }};
+
     document.getElementById('themeToggle').addEventListener('click', () => {
         const root = document.documentElement;
         root.classList.toggle('dark');
         localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
     });
+
+    function getCsrfToken() {
+        const t = document.querySelector('[name=csrfmiddlewaretoken]');
+        return t ? t.value : '';
+    }
+
+    function showToast(msg, type = 'success') {
+        const root = document.getElementById('toastRoot');
+        const colors = {
+            success: 'bg-emerald-600',
+            error: 'bg-rose-600',
+            info: 'bg-slate-800 dark:bg-slate-700'
+        };
+        const el = document.createElement('div');
+        el.className = `anim-toast ${colors[type] || colors.info} text-white text-sm px-4 py-2.5 rounded-lg shadow-lg`;
+        el.textContent = msg;
+        root.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity .25s';
+            setTimeout(() => el.remove(), 300);
+        }, 2600);
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function formatAmount(n) {
+        const v = Number(n);
+        if (isNaN(v)) return '0.00';
+        return v.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDateISOtoRu(iso) {
+        // iso: YYYY-MM-DD → DD.MM.YYYY
+        const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return m ? `${m[3]}.${m[2]}.${m[1]}` : String(iso);
+    }
+
+    /* ============== KPI ============== */
+    function updateKpi() {
+        const rows = document.querySelectorAll('#financeBody tr');
+        let total = 0, income = 0, expense = 0;
+        rows.forEach(r => {
+            const v = parseFloat(r.dataset.amount);
+            if (isNaN(v)) return;
+            total += v;
+            if (v >= 0) income += v; else expense += v;
+        });
+        document.getElementById('kpiTotal').textContent = formatAmount(total) + ' ₽';
+        document.getElementById('kpiIncome').textContent = formatAmount(income) + ' ₽';
+        document.getElementById('kpiExpense').textContent = formatAmount(expense) + ' ₽';
+        document.getElementById('kpiCount').textContent = rows.length;
+
+        document.getElementById('financeEmpty').classList.toggle('hidden', rows.length > 0);
+    }
+
+    function paintAmounts() {
+        document.querySelectorAll('#financeBody tr').forEach(r => {
+            const v = parseFloat(r.dataset.amount);
+            const cell = r.querySelector('.amount-cell');
+            if (!cell) return;
+            cell.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'text-rose-600', 'dark:text-rose-400', 'text-slate-700', 'dark:text-slate-200');
+            if (isNaN(v)) cell.classList.add('text-slate-700', 'dark:text-slate-200');
+            else if (v >= 0) cell.classList.add('text-emerald-600', 'dark:text-emerald-400');
+            else cell.classList.add('text-rose-600', 'dark:text-rose-400');
+
+            const af = r.querySelector('.amount-field');
+            if (af) af.textContent = formatAmount(v);
+        });
+    }
+
+    function createRowHtml(item) {
+        return `
+        <tr id="finance-row-${item.id}" data-amount="${item.amount}"
+            class="anim-pop hover:bg-slate-50/70 dark:hover:bg-white/5 transition-colors">
+            <td class="py-3.5 px-5 sm:px-6 text-slate-700 dark:text-slate-200 date-field">${escapeHtml(formatDateISOtoRu(item.date))}</td>
+            <td class="py-3.5 px-5 sm:px-6 font-medium amount-cell">
+                <span class="amount-field">${escapeHtml(formatAmount(item.amount))}</span> ₽
+            </td>
+            <td class="py-3.5 px-5 sm:px-6">
+                <div class="flex items-center justify-end gap-2">
+                    <button type="button" onclick="openEditModal(${item.id})"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        <span>Изменить</span>
+                    </button>
+                    <button type="button" onclick="confirmDelete(${item.id})"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        <span>Удалить</span>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }
+
+    /* ============== МОДАЛКА ============== */
+    const financeModal = document.getElementById('financeModal');
+    const financeForm = document.getElementById('financeForm');
+    const financeId = document.getElementById('financeId');
+    const financeModalTitle = document.getElementById('financeModalTitle');
+    const dateInput = financeForm.querySelector('[name=date]');
+    const amountInput = financeForm.querySelector('[name=amount]');
+
+    function openCreateModal() {
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+        financeId.value = '';
+        financeModalTitle.textContent = 'Добавить операцию';
+        if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+        if (amountInput) amountInput.value = '';
+        financeModal.classList.remove('hidden');
+        setTimeout(() => amountInput?.focus(), 50);
+    }
+
+    async function openEditModal(id) {
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+        try {
+            const resp = await fetch(`/finance/entry/${id}/`);
+            if (!resp.ok) throw new Error('load failed');
+            const item = await resp.json();
+            financeId.value = item.id;
+            financeModalTitle.textContent = 'Изменить операцию';
+            if (dateInput) dateInput.value = item.date;
+            if (amountInput) amountInput.value = item.amount;
+            financeModal.classList.remove('hidden');
+            setTimeout(() => amountInput?.focus(), 50);
+        } catch (err) {
+            console.error(err);
+            showToast('Не удалось загрузить операцию', 'error');
+        }
+    }
+
+    function closeFinanceModal() {
+        financeModal.classList.add('hidden');
+    }
+
+    function renderFieldErrors(errors) {
+        if (!errors) return;
+        for (const field in errors) {
+            const input = financeForm.querySelector(`[name=${field}]`);
+            if (!input) continue;
+            const msg = errors[field][0]?.message || 'Ошибка';
+            input.insertAdjacentHTML('afterend',
+                `<p class="error-msg text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">${escapeHtml(msg)}</p>`
+            );
+        }
+    }
+
+    financeForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+
+        const id = financeId.value;
+        const url = id
+            ? `/finance/entry/${id}/`
+            : `/finance/${PERSON_ID}/create/`;
+
+        const formData = new FormData(this);
+
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (id) {
+                    const row = document.getElementById(`finance-row-${id}`);
+                    if (row) {
+                        row.dataset.amount = data.finance.amount;
+                        row.querySelector('.date-field').textContent = formatDateISOtoRu(data.finance.date);
+                        row.querySelector('.amount-field').textContent = formatAmount(data.finance.amount);
+                    }
+                    showToast('Операция обновлена', 'success');
+                } else {
+                    document.getElementById('financeBody').insertAdjacentHTML('afterbegin', createRowHtml(data.finance));
+                    showToast('Операция добавлена', 'success');
+                }
+                paintAmounts();
+                updateKpi();
+                closeFinanceModal();
+            } else {
+                const err = await resp.json();
+                renderFieldErrors(err.errors);
+                showToast('Проверьте поля формы', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка сети', 'error');
+        }
+    });
+
+    /* ============== УДАЛЕНИЕ ============== */
+    const confirmModal = document.getElementById('confirmModal');
+    let pendingDeleteId = null;
+
+    function confirmDelete(id) {
+        pendingDeleteId = id;
+        confirmModal.classList.remove('hidden');
+    }
+
+    document.getElementById('confirmCancel').addEventListener('click', () => {
+        pendingDeleteId = null;
+        confirmModal.classList.add('hidden');
+    });
+
+    document.getElementById('confirmOk').addEventListener('click', async () => {
+        const id = pendingDeleteId;
+        confirmModal.classList.add('hidden');
+        if (id == null) return;
+        try {
+            const resp = await fetch(`/finance/entry/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/json' },
+            });
+            if (resp.ok) {
+                document.getElementById(`finance-row-${id}`)?.remove();
+                updateKpi();
+                showToast('Операция удалена', 'success');
+            } else {
+                showToast(`Ошибка удаления: ${resp.status}`, 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка сети', 'error');
+        } finally {
+            pendingDeleteId = null;
+        }
+    });
+
+    /* ============== Закрытие модалок по Esc/клику вне ============== */
+    [[financeModal, closeFinanceModal], [confirmModal, () => confirmModal.classList.add('hidden')]].forEach(([m, close]) => {
+        m.addEventListener('click', e => { if (e.target === m) close(); });
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeFinanceModal();
+            confirmModal.classList.add('hidden');
+        }
+    });
+
+    /* ============== ИНИЦИАЛИЗАЦИЯ ============== */
+    paintAmounts();
+    updateKpi();
 </script>
 </body>
 </html>
